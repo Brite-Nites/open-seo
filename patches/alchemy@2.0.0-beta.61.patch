@@ -1,0 +1,18 @@
+diff --git a/lib/Cloudflare/Workers/WorkerProvider.js b/lib/Cloudflare/Workers/WorkerProvider.js
+index 5c4c4555cbbe92330341c470079addd7af5e94cb..67d3db448ccde01d601d439b0f7ea27c634c390c 100644
+--- a/lib/Cloudflare/Workers/WorkerProvider.js
++++ b/lib/Cloudflare/Workers/WorkerProvider.js
+@@ -364,9 +364,10 @@ export const LiveWorkerProvider = () => Provider.effect(Worker, Effect.gen(funct
+         const cached = zoneCache.get(hostname);
+         if (cached)
+             return cached;
+-        const zoneList = yield* zones
+-            .listZones({})
+-            .pipe(Effect.map((response) => response.result ?? []));
++        // Paginate: accounts with more zones than one page never found
++        // zones past page 1 (steward patch, BC-23376).
++        const { accountId } = yield* yield* CloudflareEnvironment;
++        const zoneList = yield* listAllZones(accountId);
+         for (const zone of zoneList) {
+             zoneCache.set(zone.name, zone.id);
+         }
